@@ -18,6 +18,7 @@
     }
     h1 {
       color: #e91e63;
+      margin-bottom: 1rem;
     }
     input {
       padding: 10px;
@@ -40,6 +41,8 @@
     #status {
       margin-top: 20px;
       font-size: 14px;
+      text-align: center;
+      max-width: 90%;
     }
   </style>
 </head>
@@ -51,11 +54,12 @@
 
   <script>
     function startDownload() {
-      const url = document.getElementById('ytUrl').value;
+      const url = document.getElementById('ytUrl').value.trim();
       const status = document.getElementById('status');
+      status.textContent = "";
 
-      if (!url) {
-        status.textContent = "Please enter a YouTube URL.";
+      if (!url || !url.startsWith("http")) {
+        status.textContent = "❌ Please enter a valid YouTube URL.";
         return;
       }
 
@@ -70,7 +74,7 @@
       })
       .then(response => {
         if (!response.ok) {
-          return response.json().then(err => { throw new Error(err.error || "Download failed"); });
+          throw new Error("❌ Download failed on the server. Please check your link or try again.");
         }
         return response.blob();
       })
@@ -78,11 +82,13 @@
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = "video.mp4";
+        document.body.appendChild(a);
         a.click();
-        status.textContent = "Download started in browser.";
+        a.remove();
+        status.textContent = "✅ Download started in browser.";
       })
       .catch(err => {
-        status.textContent = "Error: " + err.message;
+        status.textContent = "❌ Error: " + err.message;
       });
     }
   </script>
