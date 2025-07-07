@@ -1,12 +1,13 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, send_file, jsonify, send_from_directory
 from yt_dlp import YoutubeDL
 import os
+import uuid
 
-app = Flask(__name__, static_url_path="", static_folder=".")
+app = Flask(__name__)
 
 @app.route('/')
-def serve_index():
-    return app.send_static_file('index.html')
+def home():
+    return send_from_directory('.', 'index.html')
 
 @app.route('/download', methods=['POST'])
 def download_video():
@@ -17,15 +18,21 @@ def download_video():
         return jsonify({'error': 'URL missing'}), 400
 
     try:
+        # Temporary output filename
+        filename = f"/tmp/{uuid.uuid4()}.mp4"
         ydl_opts = {
             'format': 'best',
-            'outtmpl': '%(title)s.%(ext)s'
+            'outtmpl': filename
         }
+
         with YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-        return jsonify({'message': 'Download completed successfully.'})
+
+        return send_file(filename, as_attachment=True)
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Required for Render
+    app.run(host='0.0.0.0', port=port)
