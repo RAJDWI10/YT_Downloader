@@ -59,7 +59,7 @@
         return;
       }
 
-      status.textContent = "Starting download...";
+      status.textContent = "Preparing download...";
 
       fetch('/download', {
         method: 'POST',
@@ -68,12 +68,21 @@
         },
         body: JSON.stringify({ url })
       })
-      .then(res => res.json())
-      .then(data => {
-        status.textContent = data.message || 'Download started.';
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => { throw new Error(err.error || "Download failed"); });
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "video.mp4";
+        a.click();
+        status.textContent = "Download started in browser.";
       })
       .catch(err => {
-        status.textContent = "Error downloading: " + err.message;
+        status.textContent = "Error: " + err.message;
       });
     }
   </script>
